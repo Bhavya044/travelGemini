@@ -57,16 +57,71 @@ export default function Home() {
         generationConfig,
         history: [],
       });
-      const prompt = `Name: ${data?.name}
-       Starting Place: ${data?.startingPlace}
-       Destination : ${data?.destination}
-       Duration: ${data?.duration}
-       Budget: ${data?.budget} INR
-
-       Please provide a day wise itinerary for visiting the famous and popular places, as well as locally famous places, including why they are famous, what local food to try. Also, recommend hotels, how to reach them, and any cautions to be taken care of. Please note that the budget does not include flights, trains and hotels. The hotel and flight prices may vary and the provided information is just an estimate.
-        `;
+      const prompt = `
+      Starting Place: ${data?.startingPlace}
+      Destination: ${data?.destination}
+      Duration: ${data?.duration}
+      Budget: ${data?.budget} INR
+      
+      Please provide a day wise itinerary for visiting the famous and popular places, as well as locally famous places, including why they are famous, what local food to try. Also, recommend hotels, how to reach them, and any cautions to be taken care of. 
+      
+      In addition, please provide the latitude and longitude for the following:
+      - Starting Place
+      - Destination
+      
+      Please note that the budget does not include flights, trains, and hotels. The hotel and flight prices may vary, and the provided information is just an estimate. Please provide response in following json format: 
+      "itinerary": {
+        "days": [
+          {
+            "day": 1,
+            "places": [
+              {
+                "name": "",
+                "description": "",
+                "latitude": "",
+                "longitude": ""
+              }
+            ],
+            "food": [
+              {
+                "name": "",
+                "description": ""
+              }
+            ],
+            "hotels": [
+              {
+                "name": "",
+                "description": "",
+                "price": "",
+                "howToReach": "",
+                "cautions": ""
+              }
+            ]
+          }
+        ]
+      },
+      cautions:string[],
+      safety:..."
+      "coordinates": {
+        "startingPlace": {
+          "latitude": "",
+          "longitude": ""
+        },
+        "destination": {
+          "latitude": "",
+          "longitude": ""
+        }
+    
+  }
+}
+  Please note to not send any extra string and only send data in this format.
+      `;
       const result = await chat.sendMessage(prompt);
-      navigation.navigate("Detail", { itinerary: result.response.text() });
+      const responseData = result.response.text(); // Assuming the response is in JSON format
+
+      navigation.navigate("Detail", {
+        itinerary: responseData,
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -77,7 +132,7 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Travel Itinerary Generator</Text>
-      <Controller
+      {/* <Controller
         control={control}
         name="name"
         rules={{ required: "Name is required" }}
@@ -93,7 +148,7 @@ export default function Home() {
       />
       {errors.name && (
         <Text style={styles.errorText}>{errors.name.message}</Text>
-      )}
+      )} */}
 
       <Controller
         control={control}
