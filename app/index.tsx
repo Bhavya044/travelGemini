@@ -5,9 +5,10 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Home from "@/components/Home";
 import Detail from "@/components/Detail";
+import { RootStackParamList } from "@/types/customTypes";
 
 const App = () => {
-  const Stack = createStackNavigator();
+  const Stack = createStackNavigator<RootStackParamList>();
   return (
     <NavigationContainer>
       <Stack.Navigator>
