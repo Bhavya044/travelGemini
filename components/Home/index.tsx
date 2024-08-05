@@ -2,19 +2,21 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  Button,
-  StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import MultiSlider from "@ptomasroos/react-native-multi-slider"; // Import MultiSlider
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/types/customTypes";
+import Input from "../UI/Input";
+import MultiSlider from "@ptomasroos/react-native-multi-slider";
 
-const API_KEY = "AIzaSyA58smqvMT1XvaMtqN0PCkP6CL3eU0XutY";
+const GEMINI_API_KEY = "AIzaSyA58smqvMT1XvaMtqN0PCkP6CL3eU0XutY";
+const OPENCAGE_API_KEY = "4b4d4acee27446e5bcfa2761e6587c0e"; // Replace with your OpenCage API key
 const MODEL_NAME = "gemini-1.5-flash";
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">;
@@ -28,7 +30,6 @@ export default function Home() {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: "",
       startingPlace: "",
       destination: "",
       duration: "",
@@ -36,7 +37,7 @@ export default function Home() {
     },
   });
 
-  const genAI = new GoogleGenerativeAI(API_KEY);
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
     model: MODEL_NAME,
   });
@@ -46,10 +47,22 @@ export default function Home() {
     topP: 0.95,
     topK: 64,
     maxOutputTokens: 12000,
-    // responseMimeType: "text/plain",
   };
 
   const [loading, setLoading] = useState(false);
+
+  const fetchPlaceSuggestions = async (query: string) => {
+    if (query.length < 3) return [];
+    const response = await fetch(
+      `https://api.opencagedata.com/geocode/v1/json?q=${query}&key=${OPENCAGE_API_KEY}`
+    );
+    const data = await response.json();
+    return data.results.map((result: any) => ({
+      id: result.formatted,
+      title: result.formatted,
+    }));
+  };
+
   const onSubmit = async (data: any) => {
     setLoading(true);
     try {
@@ -130,61 +143,42 @@ export default function Home() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Travel Itinerary Generator</Text>
-      {/* <Controller
-        control={control}
-        name="name"
-        rules={{ required: "Name is required" }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Name"
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-          />
-        )}
-      />
-      {errors.name && (
-        <Text style={styles.errorText}>{errors.name.message}</Text>
-      )} */}
 
       <Controller
         control={control}
         name="startingPlace"
         rules={{ required: "Starting place is required" }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Starting Place"
-            onBlur={onBlur}
-            onChangeText={onChange}
+        render={({ field: { onChange, value } }) => (
+          <Input
+            label="Starting Place"
+            placeholder="Enter starting place"
             value={value}
+            onChange={onChange}
+            error={errors.startingPlace?.message}
+            fetchSuggestions={fetchPlaceSuggestions}
+            type="autocomplete"
           />
         )}
       />
-      {errors.startingPlace && (
-        <Text style={styles.errorText}>{errors.startingPlace.message}</Text>
-      )}
 
       <Controller
         control={control}
         name="destination"
         rules={{ required: "Destination is required" }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Destination"
-            onBlur={onBlur}
-            onChangeText={onChange}
+        render={({ field: { onChange, value } }) => (
+          <Input
+            label="Destination"
+            placeholder="Enter destination"
             value={value}
+            onChange={onChange}
+            error={errors.destination?.message}
+            fetchSuggestions={fetchPlaceSuggestions}
+            type="autocomplete"
           />
         )}
       />
-      {errors.destination && (
-        <Text style={styles.errorText}>{errors.destination.message}</Text>
-      )}
 
       <Controller
         control={control}
@@ -193,20 +187,18 @@ export default function Home() {
           required: "Duration is required",
           pattern: { value: /^[0-9]+$/, message: "Duration must be a number" },
         }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Duration (in days)"
-            keyboardType="numeric"
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-          />
+        render={({ field: { onChange, value } }) => (
+          <View style={styles.inputContainer}>
+            <Input
+              label="Duration (in days)"
+              placeholder="Enter duration"
+              value={value}
+              onChange={onChange}
+              error={errors.duration?.message}
+            />
+          </View>
         )}
       />
-      {errors.duration && (
-        <Text style={styles.errorText}>{errors.duration.message}</Text>
-      )}
 
       <View style={styles.sliderContainer}>
         <Text style={styles.sliderLabel}>
@@ -231,57 +223,116 @@ export default function Home() {
       )}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
+        <ActivityIndicator
+          size="large"
+          color="#B3E5FC"
+          style={styles.loading}
+        />
       ) : (
-        <Button title="Submit" onPress={handleSubmit(onSubmit)} />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleSubmit(onSubmit)}
+        >
+          <Text style={styles.buttonText}>Submit</Text>
+        </TouchableOpacity>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    flexGrow: 1,
+    padding: 16,
+    backgroundColor: "#F7FBFF", // Light gray gradient
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 30,
+    fontWeight: "700",
+    marginBottom: 24,
+    color: "#333",
+    textAlign: "center",
+    fontFamily: "Montserrat", // Modern font
+  },
+  inputContainer: {
     marginBottom: 20,
   },
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 8,
-  },
-  errorText: {
-    color: "red",
-    marginBottom: 10,
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: "#444", // Darker gray
   },
   sliderContainer: {
-    marginBottom: 20,
-  },
-  slider: {
-    height: 40,
-  },
-  sliderTrack: {
-    backgroundColor: "#ddd",
-  },
-  sliderSelected: {
-    backgroundColor: "#007bff",
-  },
-  sliderMarker: {
-    backgroundColor: "#007bff",
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
-  sliderMarkerPressed: {
-    backgroundColor: "#0056b3",
+    marginVertical: 20,
+    backgroundColor: "#FFFFFF", // White for clean look
+    padding: 20,
+    borderRadius: 12, // Increased border radius
+    borderColor: "#DDDDDD", // Light border color
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15, // Subtle shadow
+    shadowRadius: 10,
+    elevation: 5,
   },
   sliderLabel: {
-    fontSize: 16,
-    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+    color: "#333",
+    // fontFamily: "Montserrat",
+  },
+  slider: {
+    marginVertical: 10,
+  },
+  sliderTrack: {
+    height: 10,
+    backgroundColor: "#E0E0E0", // Light gray track
+    borderRadius: 5,
+  },
+  sliderSelected: {
+    backgroundColor: "#4CAF50", // Vibrant green for selected track
+  },
+  sliderMarker: {
+    height: 30,
+    width: 30,
+    backgroundColor: "#4CAF50", // Vibrant green for marker
+    borderRadius: 15,
+    borderColor: "#FFFFFF", // White border for contrast
+    borderWidth: 2,
+  },
+  sliderMarkerPressed: {
+    height: 34,
+    width: 34,
+    backgroundColor: "#388E3C", // Darker green for pressed state
+    borderColor: "#FFFFFF",
+    borderWidth: 2,
+  },
+  button: {
+    backgroundColor: "#4CAF50", // Vibrant green button
+    paddingVertical: 16,
+    paddingHorizontal: 30,
+    borderRadius: 12, // More rounded button
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  buttonText: {
+    color: "#FFFFFF", // White text
+    fontSize: 20,
+    fontWeight: "600",
+    fontFamily: "Montserrat",
+  },
+  loading: {
+    marginVertical: 20,
+  },
+  errorText: {
+    color: "#FF6F6F", // Error color
+    fontSize: 14,
+    marginTop: 5,
   },
 });

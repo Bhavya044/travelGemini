@@ -95,8 +95,9 @@ export default function Detail() {
       {response?.itinerary?.days?.map((day, index) => (
         <View key={index} style={styles.dayContainer}>
           <Text style={styles.dayTitle}>{day?.title}</Text>
-          <Text style={styles.dayDescription}>{day?.description}</Text>
-          {day.locations.map((location, locIndex) => (
+          <Text>{JSON.stringify(day)} </Text>
+          {/* <Text style={styles.dayDescription}>{day?.description}</Text> */}
+          {/* {day.locations.map((location, locIndex) => (
             <Text key={locIndex}>
               Location {locIndex + 1}: Latitude {location.latitude}, Longitude{" "}
               {location.longitude}
@@ -109,13 +110,13 @@ export default function Detail() {
           ))}
           <Text>
             {day.hotel.name}: {day.hotel.description} ({day.hotel.price})
-          </Text>
-          <Text>
+          </Text> */}
+          {/* <Text>
             Transport: {day.transport.mode}, {day.transport.duration}
-          </Text>
-          {day.cautions.map((caution, index) => (
+          </Text> */}
+          {/* {day.cautions.map((caution, index) => (
             <Text key={index}>Caution: {caution}</Text>
-          ))}
+          ))} */}
         </View>
       ))}
       {/* <View style={styles.mapContainer}>
